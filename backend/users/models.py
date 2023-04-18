@@ -3,5 +3,4 @@ from django.db import models
 
 
 class FoodgramUser(AbstractUser):
-    class Meta():
-        swappable = 'AUTH_USER_MODEL'
+    pass
