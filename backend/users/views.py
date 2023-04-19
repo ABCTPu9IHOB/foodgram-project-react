@@ -1,3 +1,10 @@
-from django.shortcuts import render
+from django.contrib.auth import get_user_model
+from rest_framework import status, viewsets
+from users.serializers import FoodgramUserSerializer
 
-# Create your views here.
+FoodgramUser = get_user_model()
+
+
+class FoodgramUserViewSet(viewsets.ModelViewSet):
+    queryset = FoodgramUser.objects.all()
+    serializer_class = FoodgramUserSerializer
