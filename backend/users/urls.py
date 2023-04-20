@@ -8,4 +8,5 @@ router.register('users', FoodgramUserViewSet)
 
 urlpatterns = [
     path('', include(router.urls)),
+    path('', include('djoser.urls')),
 ]
