@@ -65,8 +65,7 @@ class FollowSerializer(serializers.ModelSerializer):
         ]
 
 
-class MyFollowersSerializer(UserSerializer):
-    is_subscribed = serializers.SerializerMethodField()
+class MyFollowersSerializer(FoodgramUserListSerializer):
     class Meta:
         model = FoodgramUser
         fields = [

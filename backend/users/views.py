@@ -1,7 +1,7 @@
 from django.contrib.auth import get_user_model
 from django.shortcuts import get_object_or_404
+from djoser.views import UserViewSet
 from rest_framework import status
-from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import action
 from rest_framework.response import Response
 from users.models import Follow
@@ -10,15 +10,15 @@ from users.serializers import FollowSerializer, MyFollowersSerializer
 FoodgramUser = get_user_model()
 
 
-class FollowViewSet(ModelViewSet):
+class FollowViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
     @action(
         methods=['delete', 'post'],
         detail=True,
     )
-    def subscribe(self, request, pk=None):
+    def subscribe(self, request, id=None):
         user = request.user
-        author = get_object_or_404(FoodgramUser, pk=pk)
+        author = get_object_or_404(FoodgramUser, id=id)
         follow = Follow.objects.filter(user=user, author=author)
         data = {
             'user': user.id,
@@ -31,7 +31,8 @@ class FollowViewSet(ModelViewSet):
                 )
             serializer = FollowSerializer(data=data, context=request)
             serializer.is_valid(raise_exception=True)
-            serializer.save()
+            Follow.objects.create(user=user, author=author)
+            serializer = MyFollowersSerializer(author)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
         follow = get_object_or_404(Follow, user=user, author=author)
         follow.delete()
