@@ -1,14 +1,10 @@
 from django.contrib.auth import get_user_model
 from rest_framework import serializers
+from rest_framework.validators import UniqueTogetherValidator
+from users.models import Follow
 from djoser.serializers import UserCreateSerializer, UserSerializer
 
 FoodgramUser = get_user_model()
-
-
-class FoodgramUserSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = FoodgramUser
-        fields = ['id', 'username', 'email', 'first_name', 'last_name']
 
 
 class FoodgramUserListSerializer(UserSerializer):
@@ -41,3 +37,47 @@ class FoodgramUserCreateSerializer(UserCreateSerializer):
             'last_name',
             'password'
         ]
+
+
+class FollowSerializer(serializers.ModelSerializer):
+    user = serializers.PrimaryKeyRelatedField(
+        queryset=FoodgramUser.objects.all()
+    )
+    author = serializers.PrimaryKeyRelatedField(
+        queryset=FoodgramUser.objects.all()
+    )
+
+    def validate(self, data):
+        user = data.get('user')
+        author = data.get('author')
+        if user == author:
+            raise serializers.ValidationError('Только не на себя!')
+        return data
+
+    class Meta:
+        fields = ['user', 'author']
+        model = Follow
+        validators = [
+            UniqueTogetherValidator(
+                queryset=Follow.objects.all(),
+                fields=['user', 'author'],
+            )
+        ]
+
+
+class MyFollowersSerializer(UserSerializer):
+    is_subscribed = serializers.SerializerMethodField()
+    class Meta:
+        model = FoodgramUser
+        fields = [
+            'email',
+            'id',
+            'username',
+            'first_name',
+            'last_name',
+            'is_subscribed',
+        ]
+        read_only_fields = '__all__',
+
+    def get_is_subscribed(self, obj):
+        return True
