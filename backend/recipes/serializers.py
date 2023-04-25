@@ -75,7 +75,7 @@ class RecipeSerializer(serializers.ModelSerializer):
         exists_tags = Tag.objects.filter(id__in=tags_list)
         if len(exists_tags) != len(tags_list):
             raise ValidationError('Есть несуществующий тег')
-        ingredient_list = []
+        ingredient_dict = {}
         if not ingredients:
             raise serializers.ValidationError(
                 'Минимально должен быть 1 ингредиент'
@@ -84,7 +84,7 @@ class RecipeSerializer(serializers.ModelSerializer):
             ingredient = get_object_or_404(
                 Ingredient, id=item['id']
             )
-            if ingredient in ingredient_list:
+            if ingredient in ingredient_dict:
                 raise serializers.ValidationError(
                     'Ингредиент не должен повторяться'
                 )
@@ -92,10 +92,10 @@ class RecipeSerializer(serializers.ModelSerializer):
                 raise serializers.ValidationError(
                     'Минимальное количество = 1'
                 )
-            ingredient_list.append(ingredient)
+            ingredient_dict[ingredient.pk] = (ingredient, item.get('amount'))
         data.update({
             'tags': tags_list,
-            'ingredients': ingredient_list,
+            'ingredients': ingredient_dict,
             'author': self.context.get('request').user
         })
         return data
@@ -118,9 +118,11 @@ class RecipeSerializer(serializers.ModelSerializer):
     def update(self, recipe, validated_data):
         tags = validated_data.pop('tags')
         ingredients = validated_data.pop('ingredients')
-        for key, value in validated_data.items():
-            if hasattr(recipe, key):
-                setattr(recipe, key, value)
+        recipe.name = validated_data.pop('name')
+        recipe.text = validated_data.pop('text')
+        if validated_data.get('image') is not None:
+            recipe.image = validated_data.pop('image')
+        recipe.cooking_time = validated_data.pop('cooking_time')
         if tags:
             recipe.tags.clear()
             recipe.tags.set(tags)
@@ -134,6 +136,5 @@ class RecipeSerializer(serializers.ModelSerializer):
                     amount=amount
                 ))
             RecipeIngredient.objects.bulk_create(objs)
-            return recipe
         recipe.save()
         return recipe
