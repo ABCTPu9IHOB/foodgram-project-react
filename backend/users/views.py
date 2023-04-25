@@ -4,6 +4,7 @@ from djoser.views import UserViewSet
 from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.response import Response
+
 from users.models import Follow
 from users.serializers import FollowSerializer, MyFollowersSerializer
 
@@ -12,6 +13,7 @@ FoodgramUser = get_user_model()
 
 class FollowViewSet(UserViewSet):
     queryset = FoodgramUser.objects.all()
+
     @action(
         methods=['delete', 'post'],
         detail=True,
@@ -40,7 +42,9 @@ class FollowViewSet(UserViewSet):
 
     @action(detail=False)
     def subscriptions(self, request):
-        followers = FoodgramUser.objects.filter(id__in=request.user.follower.all().values("author_id"))
+        followers = FoodgramUser.objects.filter(
+            id__in=request.user.follower.all().values("author_id")
+        )
         pages = self.paginate_queryset(followers)
         serializer = MyFollowersSerializer(
             pages, many=True, context={'request': request}

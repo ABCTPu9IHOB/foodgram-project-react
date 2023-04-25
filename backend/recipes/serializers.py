@@ -1,9 +1,12 @@
-from rest_framework import serializers
-from recipes.models import Ingredient, Recipe, Tag, RecipeIngredient
-from users.serializers import FoodgramUserListSerializer
-from django.db.models import F
 from django.core.exceptions import ValidationError
+from django.db.models import F
+from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
+from rest_framework import serializers
+
+from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
+from users.serializers import FoodgramUserListSerializer
+
 
 class IngredientSerializer(serializers.ModelSerializer):
 
@@ -65,49 +68,50 @@ class RecipeSerializer(serializers.ModelSerializer):
         return user.cart.filter(recipe=recipe).exists()
 
     def validate(self, data):
-        tags_ids = self.initial_data.get('tags')
+        tags_list = self.initial_data.get('tags')
         ingredients = self.initial_data.get('ingredients')
-        if not tags_ids or not ingredients:
-            raise ValidationError('Мало данных')
-        exists_tags = Tag.objects.filter(id__in=tags_ids)
-        if len(exists_tags) != len(tags_ids):
-            raise ValidationError('Несуществующий тэг')
-        valid_ings = {}
-        for ing in ingredients:
-            if not (isinstance(ing['amount'], int) or ing['amount'].isdigit()):
-                raise ValidationError('Неправильное количество ингидиента')
-            amount = valid_ings.get(ing['id'], 0) + int(ing['amount'])
-            if amount <= 0:
-                raise ValidationError('Неправильное количество ингридиента')
-            valid_ings[ing['id']] = amount
-        if not valid_ings:
-            raise ValidationError('Неправильные ингридиенты')
-        db_ings = Ingredient.objects.filter(pk__in=valid_ings.keys())
-        if not db_ings:
-            raise ValidationError('Неправильные ингридиенты')
-        for ing in db_ings:
-            valid_ings[ing.pk] = (ing, valid_ings[ing.pk])
+        if not tags_list or not ingredients:
+            raise ValidationError('Где теги? Где ингредиенты?')
+        exists_tags = Tag.objects.filter(id__in=tags_list)
+        if len(exists_tags) != len(tags_list):
+            raise ValidationError('Есть несуществующий тег')
+        ingredient_list = []
+        if not ingredients:
+            raise serializers.ValidationError(
+                'Минимально должен быть 1 ингредиент'
+            )
+        for item in ingredients:
+            ingredient = get_object_or_404(
+                Ingredient, id=item['id']
+            )
+            if ingredient in ingredient_list:
+                raise serializers.ValidationError(
+                    'Ингредиент не должен повторяться'
+                )
+            if int(item.get('amount')) < 1:
+                raise serializers.ValidationError(
+                    'Минимальное количество = 1'
+                )
+            ingredient_list.append(ingredient)
         data.update({
-            'tags': tags_ids,
-            'ingredients': valid_ings,
+            'tags': tags_list,
+            'ingredients': ingredient_list,
             'author': self.context.get('request').user
         })
         return data
 
     def create(self, validated_data):
         tags = validated_data.pop('tags')
-        ingredients: dict[int, tuple] = validated_data.pop('ingredients')
+        ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
         objs = []
-
         for ingredient, amount in ingredients.values():
             objs.append(RecipeIngredient(
                 recipe=recipe,
                 ingredients=ingredient,
                 amount=amount
             ))
-
         RecipeIngredient.objects.bulk_create(objs)
         return recipe
 
@@ -133,3 +137,12 @@ class RecipeSerializer(serializers.ModelSerializer):
             return recipe
         recipe.save()
         return recipe
+
+
+class MiniRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
+        read_only_fields = ['id', 'name', 'image', 'cooking_time']

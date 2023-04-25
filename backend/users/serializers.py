@@ -1,8 +1,9 @@
 from django.contrib.auth import get_user_model
+from djoser.serializers import UserCreateSerializer, UserSerializer
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
+
 from users.models import Follow
-from djoser.serializers import UserCreateSerializer, UserSerializer
 
 FoodgramUser = get_user_model()
 
