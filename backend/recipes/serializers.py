@@ -137,12 +137,3 @@ class RecipeSerializer(serializers.ModelSerializer):
             return recipe
         recipe.save()
         return recipe
-
-
-class MiniRecipeSerializer(serializers.ModelSerializer):
-    image = Base64ImageField()
-
-    class Meta:
-        model = Recipe
-        fields = ['id', 'name', 'image', 'cooking_time']
-        read_only_fields = ['id', 'name', 'image', 'cooking_time']

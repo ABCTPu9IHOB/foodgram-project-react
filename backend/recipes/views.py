@@ -2,15 +2,16 @@ from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
-from rest_framework.permissions import AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import (Cart, Favorite, Ingredient, Recipe,
                             RecipeIngredient, Tag)
 from recipes.permissions import IsAdminIsAuthorOrReadOnly
-from recipes.serializers import (IngredientSerializer, MiniRecipeSerializer,
-                                 RecipeSerializer, TagSerializer)
+from recipes.serializers import (IngredientSerializer, RecipeSerializer,
+                                 TagSerializer)
+from users.serializers import MiniRecipeSerializer
 
 
 class IngredientViewSet(viewsets.ReadOnlyModelViewSet):
@@ -34,7 +35,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAdminIsAuthorOrReadOnly]
     filter_class = RecipeFilter
 
-    @action(methods=['get'], detail=False)
+    @action(methods=['get'], detail=False,
+            permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
         shopping_cart = user.cart.all()
@@ -44,8 +46,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             ingredients = RecipeIngredient.objects.filter(recipe=recipe)
             for ingredient in ingredients:
                 amount = ingredient.amount
-                name = ingredient.ingredient.name
-                measurement_unit = ingredient.ingredient.measurement_unit
+                name = ingredient.ingredients.name
+                measurement_unit = ingredient.ingredients.measurement_unit
                 if name not in buy_list:
                     buy_list[name] = {
                         'measurement_unit': measurement_unit,
@@ -65,7 +67,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
         response = HttpResponse(wishlist, content_type='text/plain')
         return response
 
-    @action(detail=True, methods=['post', 'delete'])
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
         user = request.user
         if request.method == 'POST':
@@ -85,7 +88,8 @@ class RecipeViewSet(viewsets.ModelViewSet):
             'errors': 'Рецепт уже удален'
         }, status=status.HTTP_400_BAD_REQUEST)
 
-    @action(detail=True, methods=['post', 'delete'])
+    @action(detail=True, methods=['post', 'delete'],
+            permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
         user = request.user
         if request.method == 'POST':

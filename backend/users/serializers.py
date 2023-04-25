@@ -1,8 +1,10 @@
 from django.contrib.auth import get_user_model
 from djoser.serializers import UserCreateSerializer, UserSerializer
+from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
 from rest_framework.validators import UniqueTogetherValidator
 
+from recipes.models import Recipe
 from users.models import Follow
 
 FoodgramUser = get_user_model()
@@ -66,7 +68,19 @@ class FollowSerializer(serializers.ModelSerializer):
         ]
 
 
+class MiniRecipeSerializer(serializers.ModelSerializer):
+    image = Base64ImageField()
+
+    class Meta:
+        model = Recipe
+        fields = ['id', 'name', 'image', 'cooking_time']
+        read_only_fields = ['id', 'name', 'image', 'cooking_time']
+
+
 class MyFollowersSerializer(FoodgramUserListSerializer):
+    recipes = MiniRecipeSerializer(many=True, read_only=True)
+    recipes_count = serializers.SerializerMethodField()
+
     class Meta:
         model = FoodgramUser
         fields = [
@@ -76,8 +90,13 @@ class MyFollowersSerializer(FoodgramUserListSerializer):
             'first_name',
             'last_name',
             'is_subscribed',
+            'recipes',
+            'recipes_count'
         ]
         read_only_fields = '__all__',
 
     def get_is_subscribed(self, obj):
         return True
+
+    def get_recipes_count(self, obj):
+        return obj.recipes.count()

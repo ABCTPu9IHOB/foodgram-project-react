@@ -9,11 +9,17 @@ class Ingredient(models.Model):
     name = models.CharField(max_length=60)
     measurement_unit = models.CharField(max_length=10)
 
+    def __str__(self):
+        return f'{self.name} в {self.measurement_unit}'
+
 
 class Tag(models.Model):
     name = models.CharField(unique=True, max_length=50)
     color = models.CharField(unique=True, max_length=7)
     slug = models.SlugField(unique=True, max_length=50)
+
+    def __str__(self):
+        return self.name
 
 
 class Recipe(models.Model):
@@ -41,6 +47,9 @@ class Recipe(models.Model):
         through='RecipeIngredient',
     )
     pub_date = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f'{self.name}. Автор: {self.author.username}'
 
 
 class RecipeIngredient(models.Model):
