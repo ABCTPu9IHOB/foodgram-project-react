@@ -43,7 +43,7 @@ class FollowViewSet(UserViewSet):
     @action(detail=False)
     def subscriptions(self, request):
         followers = FoodgramUser.objects.filter(
-            id__in=request.user.follower.all().values("author_id")
+            id__in=request.user.follower.all().values('author_id')
         )
         pages = self.paginate_queryset(followers)
         serializer = MyFollowersSerializer(
