@@ -59,3 +59,45 @@ class RecipeIngredient(models.Model):
             MinValueValidator(1, 'Не меньше 1'),
         ],
     )
+
+
+class Favorite(models.Model):
+    user = models.ForeignKey(
+        FoodgramUser,
+        on_delete=models.CASCADE,
+        related_name='favorite',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='favorite',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_user_recipe'
+            )
+        ]
+
+
+class Cart(models.Model):
+    user = models.ForeignKey(
+        FoodgramUser,
+        on_delete=models.CASCADE,
+        related_name='cart',
+    )
+    recipe = models.ForeignKey(
+        Recipe,
+        on_delete=models.CASCADE,
+        related_name='cart',
+    )
+
+    class Meta:
+        constraints = [
+            models.UniqueConstraint(
+                fields=['user', 'recipe'],
+                name='unique_cart_user'
+            )
+        ]
