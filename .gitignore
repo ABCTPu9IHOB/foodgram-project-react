@@ -130,3 +130,7 @@ dmypy.json
 
 # .idea
 .idea
+
+# add
+node_modules/
+media/
