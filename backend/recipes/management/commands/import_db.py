@@ -1,9 +1,8 @@
 import os
 
+from _parser import ingredients_parser
 from backend.settings import BASE_DIR
 from django.core.management.base import BaseCommand
-
-from ._parser import ingredients_parser
 
 
 class Command(BaseCommand):

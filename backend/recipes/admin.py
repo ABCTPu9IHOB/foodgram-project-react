@@ -7,11 +7,12 @@ from recipes.models import (Cart, Favorite, Ingredient, Recipe,
 class IngreditntsDetailsInline(admin.StackedInline):
     model = RecipeIngredient
     min_num = 1
+    verbose_name = 'Позиция'
 
 
 @admin.register(Recipe)
 class RecipeAdmin(admin.ModelAdmin):
-    list_display = ['id', 'name', 'author', 'number_favorites']
+    list_display = ['id', 'name', 'author', 'pub_date', 'number_favorites']
     search_fields = ['author', 'name']
     list_filter = ['author', 'tags']
     inlines = [IngreditntsDetailsInline]
