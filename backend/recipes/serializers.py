@@ -3,9 +3,10 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-
-from recipes.models import Ingredient, Recipe, RecipeIngredient, Tag
 from users.serializers import FoodgramUserListSerializer
+
+from recipes.models import (Cart, Favorite, Ingredient, Recipe,
+                            RecipeIngredient, Tag)
 
 
 class IngredientSerializer(serializers.ModelSerializer):
@@ -105,6 +106,21 @@ class RecipeSerializer(serializers.ModelSerializer):
         ingredients = validated_data.pop('ingredients')
         recipe = Recipe.objects.create(**validated_data)
         recipe.tags.set(tags)
+        self.extension(recipe, ingredients)
+        return recipe
+
+    def update(self, recipe, validated_data):
+        tags = validated_data.pop('tags')
+        ingredients = validated_data.pop('ingredients')
+        if tags:
+            recipe.tags.clear()
+            recipe.tags.set(tags)
+        if ingredients:
+            recipe.ingredients.clear()
+            self.extension(recipe, ingredients)
+        return super().update(recipe, validated_data)
+
+    def extension(self, recipe, ingredients):
         objs = []
         for ingredient, amount in ingredients.values():
             objs.append(RecipeIngredient(
@@ -113,28 +129,47 @@ class RecipeSerializer(serializers.ModelSerializer):
                 amount=amount
             ))
         RecipeIngredient.objects.bulk_create(objs)
-        return recipe
 
-    def update(self, recipe, validated_data):
-        tags = validated_data.pop('tags')
-        ingredients = validated_data.pop('ingredients')
-        recipe.name = validated_data.pop('name')
-        recipe.text = validated_data.pop('text')
-        if validated_data.get('image') is not None:
-            recipe.image = validated_data.pop('image')
-        recipe.cooking_time = validated_data.pop('cooking_time')
-        if tags:
-            recipe.tags.clear()
-            recipe.tags.set(tags)
-        if ingredients:
-            recipe.ingredients.clear()
-            objs = []
-            for ingredient, amount in ingredients.values():
-                objs.append(RecipeIngredient(
-                    recipe=recipe,
-                    ingredients=ingredient,
-                    amount=amount
-                ))
-            RecipeIngredient.objects.bulk_create(objs)
-        recipe.save()
-        return recipe
+
+class FavoriteSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Favorite
+
+    def validate(self, obj):
+        user = self.context['request'].user
+        recipe = obj['recipe']
+        favorite = user.favorite.filter(recipe=recipe).exists()
+
+        if self.context.get('request').method == 'POST' and favorite:
+            raise serializers.ValidationError(
+                'Этот рецепт уже добавлен в избранное'
+            )
+        if self.context.get('request').method == 'DELETE' and not favorite:
+            raise serializers.ValidationError(
+                'Этот рецепт отсутствует в избранном'
+            )
+        return obj
+
+
+class CartSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        fields = '__all__'
+        model = Cart
+
+    def validate(self, obj):
+        user = self.context['request'].user
+        recipe = obj['recipe']
+        cart = user.cart.filter(recipe=recipe).exists()
+
+        if self.context.get('request').method == 'POST' and cart:
+            raise serializers.ValidationError(
+                'Этот рецепт уже добавлен в корзину'
+            )
+        if self.context.get('request').method == 'DELETE' and not cart:
+            raise serializers.ValidationError(
+                'Этот рецепт отсутствует в корзине'
+            )
+        return obj

@@ -6,14 +6,15 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
+from users.serializers import MiniRecipeSerializer
 
 from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
 from recipes.permissions import IsAdminIsAuthorOrReadOnly
-from recipes.serializers import (IngredientSerializer, RecipeSerializer,
+from recipes.serializers import (CartSerializer, FavoriteSerializer,
+                                 IngredientSerializer, RecipeSerializer,
                                  TagSerializer)
 from recipes.utils import wishlist
-from users.serializers import MiniRecipeSerializer
 
 FoodgramUser = get_user_model()
 
@@ -54,41 +55,33 @@ class RecipeViewSet(viewsets.ModelViewSet):
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def favorite(self, request, pk=None):
-        user = request.user
-        if request.method == 'POST':
-            if Favorite.objects.filter(user=user, recipe__id=pk).exists():
-                return Response({
-                    'errors': 'Рецепт уже добавлен в список'
-                }, status=status.HTTP_400_BAD_REQUEST)
-            recipe = get_object_or_404(Recipe, id=pk)
-            Favorite.objects.create(user=user, recipe=recipe)
-            serializer = MiniRecipeSerializer(recipe)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        obj = Favorite.objects.filter(user=user, recipe__id=pk)
-        if obj.exists():
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({
-            'errors': 'Рецепт уже удален'
-        }, status=status.HTTP_400_BAD_REQUEST)
+        return self.add_del_cart_or_favorite(request, Favorite, pk)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
     def shopping_cart(self, request, pk=None):
+        return self.add_del_cart_or_favorite(request, Cart, pk)
+
+    def add_del_cart_or_favorite(self, request, model, pk):
         user = request.user
+        data = {
+            'user': user.id,
+            'recipe': pk,
+        }
+        if model == Favorite:
+            serializer = FavoriteSerializer(
+                data=data, context={'request': request}
+            )
+        else:
+            serializer = CartSerializer(
+                data=data, context={'request': request}
+            )
+        serializer.is_valid(raise_exception=True)
         if request.method == 'POST':
-            if Cart.objects.filter(user=user, recipe__id=pk).exists():
-                return Response({
-                    'errors': 'Рецепт уже добавлен в список'
-                }, status=status.HTTP_400_BAD_REQUEST)
             recipe = get_object_or_404(Recipe, id=pk)
-            Cart.objects.create(user=user, recipe=recipe)
+            model.objects.create(user=user, recipe=recipe)
             serializer = MiniRecipeSerializer(recipe)
             return Response(serializer.data, status=status.HTTP_201_CREATED)
-        obj = Cart.objects.filter(user=user, recipe__id=pk)
-        if obj.exists():
-            obj.delete()
-            return Response(status=status.HTTP_204_NO_CONTENT)
-        return Response({
-            'errors': 'Рецепт уже удален'
-        }, status=status.HTTP_400_BAD_REQUEST)
+        obj = model.objects.filter(user=user, recipe__id=pk)
+        obj.delete()
+        return Response(status=status.HTTP_204_NO_CONTENT)
