@@ -1,5 +1,5 @@
 from django.contrib.auth import get_user_model
-from django.http import HttpResponse
+from django.db.models import Sum
 from django.shortcuts import get_object_or_404
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import status, viewsets
@@ -8,11 +8,11 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 
 from recipes.filters import IngredientSearchFilter, RecipeFilter
-from recipes.models import (Cart, Favorite, Ingredient, Recipe,
-                            RecipeIngredient, Tag)
+from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
 from recipes.permissions import IsAdminIsAuthorOrReadOnly
 from recipes.serializers import (IngredientSerializer, RecipeSerializer,
                                  TagSerializer)
+from recipes.utils import wishlist
 from users.serializers import MiniRecipeSerializer
 
 FoodgramUser = get_user_model()
@@ -45,33 +45,11 @@ class RecipeViewSet(viewsets.ModelViewSet):
             permission_classes=[IsAuthenticated])
     def download_shopping_cart(self, request):
         user = request.user
-        shopping_cart = user.cart.all()
-        buy_list = {}
-        for item in shopping_cart:
-            recipe = item.recipe
-            ingredients = RecipeIngredient.objects.filter(recipe=recipe)
-            for ingredient in ingredients:
-                amount = ingredient.amount
-                name = ingredient.ingredients.name
-                measurement_unit = ingredient.ingredients.measurement_unit
-                if name not in buy_list:
-                    buy_list[name] = {
-                        'measurement_unit': measurement_unit,
-                        'amount': amount,
-                    }
-                else:
-                    buy_list[name]['amount'] = (
-                        buy_list[name]['amount'] + amount
-                    )
-        wishlist = []
-        for name, data in buy_list.items():
-            amount = data['amount']
-            measurement_unit = data['measurement_unit']
-            wishlist.append(
-                f'{name} - {amount} {measurement_unit}'
-            )
-        response = HttpResponse(wishlist, content_type='text/plain')
-        return response
+        buy_list = Ingredient.objects.filter(
+            recipe__recipe__cart__user=user).values(
+            'name',
+            'measurement_unit').annotate(total=Sum('recipe__amount'))
+        return wishlist(buy_list)
 
     @action(detail=True, methods=['post', 'delete'],
             permission_classes=[IsAuthenticated])
