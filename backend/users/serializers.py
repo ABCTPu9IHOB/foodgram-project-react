@@ -79,7 +79,7 @@ class MiniRecipeSerializer(serializers.ModelSerializer):
 
 class MyFollowersSerializer(FoodgramUserListSerializer):
     recipes = MiniRecipeSerializer(many=True, read_only=True)
-    recipes_count = serializers.SerializerMethodField()
+    recipes_count = serializers.IntegerField(source='recipes.count')
 
     class Meta:
         model = FoodgramUser
@@ -97,6 +97,3 @@ class MyFollowersSerializer(FoodgramUserListSerializer):
 
     def get_is_subscribed(self, obj):
         return True
-
-    def get_recipes_count(self, obj):
-        return obj.recipes.count()

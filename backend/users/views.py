@@ -27,10 +27,6 @@ class FollowViewSet(UserViewSet):
             'author': author.id,
         }
         if request.method == 'POST':
-            if follow.exists():
-                return Response(
-                    'Вы уже подписаны', status=status.HTTP_400_BAD_REQUEST
-                )
             serializer = FollowSerializer(data=data, context=request)
             serializer.is_valid(raise_exception=True)
             Follow.objects.create(user=user, author=author)
