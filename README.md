@@ -1,31 +1,40 @@
 # Диплом - Foodgram
 
-## Как запустить проект
+![foodgram workflow](https://github.com/abctpu9ihob/yamdb_final/actions/workflows/foodgram_workflow.yml/badge.svg)
 
-Клонировать репозиторий и перейти в него в командной строке:
+http://51.250.81.165/redoc/
 
-```cd backend/```
+### Краткое описание проекта
 
-Cоздать и активировать виртуальное окружение:
+Проект YaMDb собирает отзывы пользователей на произведения. Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку.
 
-```python3 -m venv venv```
+### Запуск приложения в контейнерах
 
-```source venv/bin/activate```
+Разверните проект:
 
-Установить зависимости из файла requirements.txt:
+```cd infra/```
 
-```python3 -m pip install --upgrade pip```
+```docker-compose up```
 
-```pip install -r requirements.txt```
+Выполните миграции:
 
-Перейти в директорию с manage.py и выполнить миграции:
+```docker-compose exec web python manage.py migrate```
 
-```python3 manage.py migrate```
+[Опционально] Для быстрого наполнения базы тестовыми данными выполните команду:
 
-[Опционально] Для быстрого наполнения базы тестовыми данными (ингредиентами) выполните команду:
+```docker-compose exec web python manage.py import_db```
 
-```python3 manage.py import_db```
+Создайте суперпользователя:
 
-Запустить проект:
+```docker-compose exec web python manage.py createsuperuser```
 
-```python3 manage.py runserver```
+Собрать всю «статику» проекта:
+
+```docker-compose exec web python manage.py collectstatic --no-input```
+
+***
+### Авторы
+ABCTPu9IHOB
+
+### License
+MIT
