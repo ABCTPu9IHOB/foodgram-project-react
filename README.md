@@ -1,12 +1,24 @@
 # Диплом - Foodgram
 
-![foodgram workflow](https://github.com/abctpu9ihob/yamdb_final/actions/workflows/foodgram_workflow.yml/badge.svg)
+![foodgram workflow](https://github.com/abctpu9ihob/foodgram-project-react/actions/workflows/foodgram_workflow.yml/badge.svg)
 
-http://51.250.81.165/redoc/
+### Demo:
+
+http://158.160.41.226/
+
+```bot@yandex.ru - bot12345```
+
+```bob@yandex.ru - bob12345```
+
+http://158.160.41.226/admin (админка)
+
+```admin@yandex.ru - admin```
+
+http://158.160.41.226/api/docs/ (redoc)
 
 ### Краткое описание проекта
 
-Проект YaMDb собирает отзывы пользователей на произведения. Сами произведения в YaMDb не хранятся, здесь нельзя посмотреть фильм или послушать музыку.
+На этом сервисе пользователи смогут публиковать рецепты, подписываться на публикации других пользователей, добавлять понравившиеся рецепты в список «Избранное», а перед походом в магазин скачивать сводный список продуктов, необходимых для приготовления одного или нескольких выбранных блюд.
 
 ### Запуск приложения в контейнерах
 
