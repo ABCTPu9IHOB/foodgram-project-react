@@ -6,7 +6,6 @@ from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
-from users.serializers import MiniRecipeSerializer
 
 from recipes.filters import IngredientSearchFilter, RecipeFilter
 from recipes.models import Cart, Favorite, Ingredient, Recipe, Tag
@@ -15,6 +14,7 @@ from recipes.serializers import (CartSerializer, FavoriteSerializer,
                                  IngredientSerializer, RecipeSerializer,
                                  TagSerializer)
 from recipes.utils import wishlist
+from users.serializers import MiniRecipeSerializer
 
 FoodgramUser = get_user_model()
 

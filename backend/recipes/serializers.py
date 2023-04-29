@@ -3,10 +3,10 @@ from django.db.models import F
 from django.shortcuts import get_object_or_404
 from drf_extra_fields.fields import Base64ImageField
 from rest_framework import serializers
-from users.serializers import FoodgramUserListSerializer
 
 from recipes.models import (Cart, Favorite, Ingredient, Recipe,
                             RecipeIngredient, Tag)
+from users.serializers import FoodgramUserListSerializer
 
 
 class IngredientSerializer(serializers.ModelSerializer):

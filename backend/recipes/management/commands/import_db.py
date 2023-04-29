@@ -3,7 +3,7 @@ import os
 from django.core.management.base import BaseCommand
 
 from backend.settings import BASE_DIR
-from recipes.management.commands._parser import ingredients_parser
+from recipes.management.commands._parser import ingredients_parser, tags_parser
 
 
 class Command(BaseCommand):
@@ -12,6 +12,7 @@ class Command(BaseCommand):
 
         parser_dict = {
             'ingredients': ingredients_parser,
+            'tags': tags_parser,
         }
 
         for name_csv, parser in parser_dict.items():
