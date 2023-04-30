@@ -85,13 +85,13 @@ class RecipeSerializer(serializers.ModelSerializer):
             ingredient = get_object_or_404(
                 Ingredient, id=item['id']
             )
-            if ingredient in ingredient_dict:
+            if ingredient.pk in ingredient_dict:
                 raise serializers.ValidationError(
                     'Ингредиент не должен повторяться'
                 )
             if int(item.get('amount')) < 1:
                 raise serializers.ValidationError(
-                    'Минимальное количество = 1'
+                    'Минимальное количество ингредиента = 1'
                 )
             ingredient_dict[ingredient.pk] = (ingredient, item.get('amount'))
         data.update({

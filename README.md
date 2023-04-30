@@ -32,7 +32,7 @@ http://158.160.41.226/api/docs/ (redoc)
 
 ```docker-compose exec web python manage.py migrate```
 
-[Опционально] Для быстрого наполнения базы тестовыми данными выполните команду:
+[Опционально] Для быстрого наполнения базы тестовыми данными выполните команду (в Demo уже всё есть):
 
 ```docker-compose exec web python manage.py import_db```
 
